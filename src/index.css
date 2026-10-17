@@ -1,0 +1,96 @@
+@import "tailwindcss";
+
+@theme {
+  --font-fredoka: 'Fredoka', sans-serif;
+  --font-nunito: 'Nunito', sans-serif;
+
+  --color-ink: #4A3F45;
+  --color-muted: #8A7A80;
+  --color-muted-2: #9C8C92;
+  --color-muted-3: #A8969C;
+  --color-subtle: #7E6E74;
+  --color-paper: #FFFDF9;
+  --color-line: #F1E4DA;
+  --color-tan: #F0E0D3;
+  --color-cream: #FFF8F1;
+
+  --color-pink: #FF9DB5;
+  --color-pink-shade: #E67E99;
+  --color-pink-tint: #FFE0E8;
+  --color-pink-ink: #A63D5E;
+  --color-mint: #7ED3A6;
+  --color-mint-strong: #6CC896;
+  --color-mint-tint: #D5F3E4;
+  --color-mint-ink: #2F7A55;
+  --color-butter: #FFE07A;
+  --color-butter-tint: #FFF2C4;
+  --color-butter-ink: #8A6400;
+
+  /* The design uses the browser's default line-height, not Tailwind's 1.5. */
+  --text-xs--line-height: normal;
+  --text-sm--line-height: normal;
+  --text-base--line-height: normal;
+  --text-lg--line-height: normal;
+}
+
+html, :host { line-height: normal; }
+
+body {
+  margin: 0;
+  background: #FFF8F1;
+  -webkit-font-smoothing: antialiased;
+}
+input::placeholder { color: #B9A79C; }
+button { font-family: inherit; }
+button:disabled { cursor: default; }
+
+/* Scene & UI keyframes (from the design handoff). */
+@keyframes sway { 0%,100% { transform: rotate(-1.6deg) } 50% { transform: rotate(1.6deg) } }
+@keyframes bob { 0%,100% { transform: translateY(0) } 50% { transform: translateY(-5px) } }
+@keyframes hop { 0%,70%,100% { transform: translateY(0) } 80% { transform: translateY(-10px) } 90% { transform: translateY(0) } }
+@keyframes twinkle { 0%,100% { opacity: .25; transform: scale(.7) } 50% { opacity: 1; transform: scale(1) } }
+@keyframes rainFall { from { transform: translateY(0) rotate(8deg) } to { transform: translateY(480px) rotate(8deg) } }
+@keyframes snowFall { 0% { transform: translate(0,0) } 50% { transform: translate(14px,240px) } 100% { transform: translate(-6px,480px) } }
+@keyframes drift { from { transform: translateX(0) } to { transform: translateX(40px) } }
+@keyframes canTip {
+  0% { transform: translate(90px,-60px) rotate(10deg); opacity: 0 }
+  18% { transform: translate(0,0) rotate(0); opacity: 1 }
+  32% { transform: translate(0,0) rotate(-38deg) }
+  78% { transform: translate(0,0) rotate(-38deg); opacity: 1 }
+  100% { transform: translate(90px,-50px) rotate(0); opacity: 0 }
+}
+@keyframes dropFall { 0% { transform: translateY(0); opacity: 0 } 15% { opacity: 1 } 100% { transform: translateY(80px); opacity: 0 } }
+@keyframes sparkle { 0% { transform: scale(0) rotate(0); opacity: 0 } 40% { transform: scale(1.15) rotate(30deg); opacity: 1 } 100% { transform: scale(0) rotate(90deg); opacity: 0 } }
+@keyframes glow { 0% { opacity: 0; transform: scale(.6) } 40% { opacity: 1; transform: scale(1) } 100% { opacity: 0; transform: scale(1.2) } }
+@keyframes weedPop {
+  0% { transform: translateY(26px) scale(.5); opacity: 0 }
+  22% { transform: translateY(0) scale(1); opacity: 1 }
+  30% { transform: rotate(-8deg) }
+  38% { transform: rotate(8deg) }
+  50% { transform: rotate(0); opacity: 1 }
+  62% { transform: translateY(-70px) rotate(-40deg); opacity: 0 }
+  100% { opacity: 0; transform: translateY(-70px) }
+}
+@keyframes puff { 0%,48% { transform: scale(0); opacity: 0 } 60% { transform: scale(1); opacity: .95 } 100% { transform: scale(1.7); opacity: 0 } }
+@keyframes toastIn {
+  0% { transform: translate(-50%,-14px) scale(.9); opacity: 0 }
+  10% { transform: translate(-50%,0) scale(1); opacity: 1 }
+  88% { opacity: 1; transform: translate(-50%,0) }
+  100% { opacity: 0; transform: translate(-50%,-8px) }
+}
+@keyframes heartUp { 0% { transform: translateY(0) scale(.4); opacity: 0 } 25% { opacity: 1; transform: translateY(-20px) scale(1) } 100% { transform: translateY(-130px) scale(.8); opacity: 0 } }
+@keyframes popIn { 0% { transform: scale(.4); opacity: 0 } 70% { transform: scale(1.06); opacity: 1 } 100% { transform: scale(1) } }
+@keyframes flow { from { background-position: 0 0 } to { background-position: 0 44px } }
+@keyframes ripple { from { transform: scale(.4); opacity: .9 } to { transform: scale(1.35); opacity: 0 } }
+
+/* Flower component */
+@keyframes fsway { 0%,100% { transform: rotate(-3deg) } 50% { transform: rotate(3deg) } }
+@keyframes fglow { 0%,100% { opacity: .55 } 50% { opacity: 1 } }
+@keyframes ftwinkle { 0%,100% { opacity: .2 } 50% { opacity: 1 } }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-iteration-count: 1 !important;
+    transition-duration: .01ms !important;
+  }
+}
