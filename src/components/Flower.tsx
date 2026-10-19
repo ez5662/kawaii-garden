@@ -140,13 +140,13 @@ const HEADS: Record<FlowerType, () => ReactNode> = {
   ),
 }
 
-/** Kawaii flower, 64×120. Stage 0 sprout · 1 bud · 2 bloom. */
-export function Flower({ type, stage }: { type: FlowerType; stage: number }) {
+/** Kawaii flower, 64×120. Stage 0 sprout · 1 bud · 2 bloom. `still` turns off the sway (pressed flowers). */
+export function Flower({ type, stage, still }: { type: FlowerType; stage: number; still?: boolean }) {
   const st = Math.max(0, Math.min(2, stage))
   const stemH = st === 0 ? 16 : st === 1 ? 54 : type === 'sunflower' ? 76 : type === 'lavender' ? 58 : 64
   return (
     <div className="relative" style={{ width: 64, height: 120 }}>
-      <div className="absolute inset-0" style={{ transformOrigin: '50% 100%', animation: 'fsway 3.6s ease-in-out infinite' }}>
+      <div className="absolute inset-0" style={{ transformOrigin: '50% 100%', animation: still ? undefined : 'fsway 3.6s ease-in-out infinite' }}>
         <Shape s={{ bottom: 0, left: 30, width: 4, height: stemH, borderRadius: 3, background: '#6CC08F' }} />
         {st === 0 ? (
           <>

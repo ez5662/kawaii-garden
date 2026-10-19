@@ -1,11 +1,11 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import {
-  BED_LEVEL, BED_MAX, BLOSSOM_SPOTS, CHORES_PER_BLOSSOM, STAGE_NAMES, STAGE_THRESHOLDS, TASKS_PER_LEVEL,
-  blossomCount, choreSum, dayKey, flowerMeta, levelFor, loadGarden, saveGarden, stageIdx,
-  type FlowerType, type PlotTarget, type SavedGarden, type TestingProps, type Weather,
+  BED_LEVEL, BED_MAX, BLOSSOM_SPOTS, CHORES_PER_BLOSSOM, EMPTY_ALBUM, FLOWERS, STAGE_NAMES, STAGE_THRESHOLDS, TASKS_PER_LEVEL, VASE_SIZE,
+  blossomCount, choreSum, dayKey, flowerMeta, flowerStage, levelFor, loadGarden, saveGarden, stageIdx,
+  type FlowerSpot, type FlowerType, type Planting, type PlotTarget, type SavedGarden, type TestingProps, type Weather,
 } from './garden'
 
-export type EffectType = 'water' | 'fertilize' | 'weed' | 'bonus'
+export type EffectType = 'water' | 'fertilize' | 'weed' | 'bonus' | 'harvest'
 export type ToastType = EffectType | 'plant'
 export interface Toast {
   title: string
@@ -17,11 +17,15 @@ export interface Fx {
   effect: EffectType
   toast: Toast
   key: number
+  /** Harvest only: which flower floats up, and from where in the scene. */
+  flower?: FlowerType
+  at?: { left: string; bottom: number }
 }
 
 const FX_MS = 2800
 
-const MSGS: Record<EffectType, [string, string]> = {
+type ChoreEffect = Exclude<EffectType, 'harvest'>
+const MSGS: Record<ChoreEffect, [string, string]> = {
   water: ['Watered!', 'Chore 1 today — a big refreshing drink'],
   fertilize: ['Fertilized!', 'Chore 2 — the roots are sparkling'],
   weed: ['Weeded!', 'Chore 3 — the tree is fully tended today'],
@@ -41,9 +45,9 @@ export function useGarden(testing: TestingProps) {
   useEffect(() => saveGarden(garden), [garden])
   useEffect(() => () => window.clearTimeout(fxTimer.current), [])
 
-  const fire = useCallback((effect: EffectType, toast: Toast) => {
+  const fire = useCallback((effect: EffectType, toast: Toast, extra?: Pick<Fx, 'flower' | 'at'>) => {
     window.clearTimeout(fxTimer.current)
-    setFx({ effect, toast, key: Date.now() })
+    setFx({ effect, toast, key: Date.now(), ...extra })
     fxTimer.current = window.setTimeout(() => setFx(null), FX_MS)
   }, [])
 
@@ -66,7 +70,7 @@ export function useGarden(testing: TestingProps) {
       streak: st,
     }))
 
-    const type: EffectType = cnt <= 3 ? (['water', 'fertilize', 'weed'] as const)[cnt - 1] : 'bonus'
+    const type: ChoreEffect = cnt <= 3 ? (['water', 'fertilize', 'weed'] as const)[cnt - 1] : 'bonus'
     const before = choreSum(log, sim), after = choreSum(newLog, sim)
     const a = stageIdx(before), b = stageIdx(after)
     let sub = MSGS[type][1]
@@ -122,10 +126,42 @@ export function useGarden(testing: TestingProps) {
 
   const done = tasks.filter(t => t.status === 'done').length
 
+  /** Plant a seed. Planting where a flower already grows swaps it for the new seed. */
   const plant = (target: PlotTarget, type: FlowerType) => {
-    if (target === 'bed') setGarden(g => ({ ...g, bed: [...g.bed, { type, at: done }] }))
-    else setGarden(g => ({ ...g, plots: { ...g.plots, [target]: { type, at: done } } }))
+    const p: Planting = { type, at: done }
+    if (target === 'bed') setGarden(g => ({ ...g, bed: [...g.bed, p] }))
+    else if (typeof target === 'number') setGarden(g => ({ ...g, plots: { ...g.plots, [target]: p } }))
+    else setGarden(g => ({ ...g, bed: g.bed.map((b, k) => (k === target.bedSlot ? p : b)) }))
     fire('bonus', { title: `Planted a ${flowerMeta(type).name.toLowerCase()}!`, sub: 'Finish 3 tasks to see it bloom', type: 'plant' })
+  }
+
+  const plantingAt = (spot: FlowerSpot): Planting | undefined =>
+    typeof spot === 'number' ? plots[spot] : bed[spot.bedSlot]
+
+  /** Snip a fully bloomed flower into the album; it regrows from a sprout in the same spot. */
+  const harvest = (spot: FlowerSpot, at?: Fx['at']) => {
+    const pl = plantingAt(spot)
+    if (!pl || flowerStage(done, pl.at) < 2) return
+    const t = pl.type, day = dayKey()
+    const firstTime = !garden.album.counts[t]
+    const count = (garden.album.counts[t] || 0) + 1
+    const regrown: Planting = { type: t, at: done }
+    setGarden(g => ({
+      ...g,
+      plots: typeof spot === 'number' ? { ...g.plots, [spot]: regrown } : g.plots,
+      bed: typeof spot === 'number' ? g.bed : g.bed.map((b, k) => (k === spot.bedSlot ? regrown : b)),
+      album: {
+        counts: { ...g.album.counts, [t]: (g.album.counts[t] || 0) + 1 },
+        firstAt: { ...g.album.firstAt, [t]: g.album.firstAt[t] ?? day },
+        recent: [t, ...g.album.recent].slice(0, VASE_SIZE),
+      },
+    }))
+    const name = flowerMeta(t).name
+    const discovered = Object.keys(garden.album.counts).length + (firstTime ? 1 : 0)
+    fire('harvest', firstTime
+      ? { title: `New album page: ${name}!`, sub: `Pressed into your flower album · ${discovered}/${FLOWERS.length} found`, type: 'harvest' }
+      : { title: `Harvested a ${name.toLowerCase()}!`, sub: `${count} in your album · it regrows after 3 tasks`, type: 'harvest' },
+    { flower: t, at })
   }
 
   /** Pick a simulated weather (turns live weather off). */
@@ -138,7 +174,7 @@ export function useGarden(testing: TestingProps) {
   }
   const reset = () => {
     clearFx()
-    setGarden(g => ({ ...g, tasks: [], log: {}, plots: {}, bed: [], streak: { count: 0, last: null } }))
+    setGarden(g => ({ ...g, tasks: [], log: {}, plots: {}, bed: [], streak: { count: 0, last: null }, album: EMPTY_ALBUM }))
   }
   /** Replace everything with an imported backup. */
   const restore = (g: SavedGarden) => {
@@ -184,13 +220,13 @@ export function useGarden(testing: TestingProps) {
 
   return {
     // raw state
-    garden, tasks, plots, bed, manualWeather: weather, weatherLive, fx,
+    garden, tasks, plots, bed, album: garden.album, manualWeather: weather, weatherLive, fx,
     // derived
     streak, level, done, total, dropped, effective, open, rate, eff,
     todayCount, chores, stageIndex: si, stageName: STAGE_NAMES[si], stagePct, stageHint, nBloom,
     bedCap, bedOpen, tasksToNextLevel,
     // actions
-    complete, undo, drop, remove, unremove, add, plant, setWeather, setWeatherLive, reset, restore,
+    complete, undo, drop, remove, unremove, add, plant, harvest, plantingAt, setWeather, setWeatherLive, reset, restore,
   }
 }
 

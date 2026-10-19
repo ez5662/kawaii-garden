@@ -24,7 +24,22 @@ export interface Streak {
 }
 
 /** A soil/pond plot is keyed by its unlock level; the flower bed is 'bed'. */
-export type PlotTarget = number | 'bed'
+/** An existing flower: a scene plot (by unlock level) or a flower-bed slot. */
+export type FlowerSpot = number | { bedSlot: number }
+/** Where the seed picker plants: a scene plot, the next free bed slot, or a bed slot being swapped. */
+export type PlotTarget = number | 'bed' | { bedSlot: number }
+
+export const sameSpot = (a: FlowerSpot | null, b: FlowerSpot | null) =>
+  a != null && b != null && (typeof a === 'number' ? a === b : typeof b !== 'number' && a.bedSlot === b.bedSlot)
+
+/** Harvested flowers: how many of each, when first pressed, and the latest few (for the vase). */
+export interface Album {
+  counts: Partial<Record<FlowerType, number>>
+  firstAt: Partial<Record<FlowerType, string>>
+  recent: FlowerType[]
+}
+export const EMPTY_ALBUM: Album = { counts: {}, firstAt: {}, recent: [] }
+export const VASE_SIZE = 7
 
 export interface SavedGarden {
   tasks: Task[]
@@ -35,6 +50,7 @@ export interface SavedGarden {
   /** Manually simulated weather; used when live weather is off or unavailable. */
   weather: Weather
   weatherLive: boolean
+  album: Album
 }
 
 export const STORAGE_KEY = 'kawaii-garden-v1'
@@ -138,6 +154,19 @@ const toPlanting = (v: unknown): Planting | null =>
  * Coerce untrusted data (localStorage or an imported backup) into a valid garden,
  * dropping anything malformed. Returns `tasks: null` when there is no task list at all.
  */
+function normalizeAlbum(a: unknown): Album {
+  if (!isObj(a)) return EMPTY_ALBUM
+  const counts: Album['counts'] = {}, firstAt: Album['firstAt'] = {}
+  for (const f of FLOWERS) {
+    const n = isObj(a.counts) ? a.counts[f.type] : undefined
+    if (isNum(n) && n > 0) counts[f.type] = Math.floor(n)
+    const d = isObj(a.firstAt) ? a.firstAt[f.type] : undefined
+    if (typeof d === 'string') firstAt[f.type] = d
+  }
+  const recent = Array.isArray(a.recent) ? a.recent.filter(isFlower).slice(0, VASE_SIZE) : []
+  return { counts, firstAt, recent }
+}
+
 export function normalizeGarden(s: Raw): Omit<SavedGarden, 'tasks'> & { tasks: Task[] | null } {
   const tasks = Array.isArray(s.tasks)
     ? s.tasks.flatMap((t): Task[] =>
@@ -174,6 +203,7 @@ export function normalizeGarden(s: Raw): Omit<SavedGarden, 'tasks'> & { tasks: T
     bed,
     weather: WEATHERS.includes(s.weather as Weather) ? (s.weather as Weather) : 'sunny',
     weatherLive: typeof s.weatherLive === 'boolean' ? s.weatherLive : true,
+    album: normalizeAlbum(s.album),
   }
 }
 

@@ -1,7 +1,37 @@
 import { Lock, Plus } from 'lucide-react'
-import { BED_LEVEL, BED_MAX, SCENE_PLOTS, flowerStage, type Planting, type PlotTarget } from '../../lib/garden'
+import type { CSSProperties } from 'react'
+import {
+  BED_LEVEL, BED_MAX, SCENE_PLOTS, flowerMeta, flowerStage, sameSpot, type FlowerSpot, type Planting, type PlotTarget,
+} from '../../lib/garden'
 import { Flower } from '../Flower'
+import { BED_BOTTOM, BED_W } from './spots'
 import { Shape } from '../Shape'
+
+/** Two soft twinkles near the bloom: the only hint that a flower is ready to harvest. */
+function ReadyTwinkle() {
+  const star = (left: number, bottom: number, z: number, delay: string) => (
+    <Shape s={{ left, bottom, width: z, height: z, background: '#FFFFFF', boxShadow: '0 0 6px #FFE07A, 0 0 2px #FFD54F', transform: 'rotate(45deg)', borderRadius: 1.5, animation: `ftwinkle 1.8s ease-in-out ${delay} infinite`, pointerEvents: 'none' }} />
+  )
+  return <>{star(8, 96, 6, '0s')}{star(50, 84, 5, '-.9s')}</>
+}
+
+/** Invisible hit area over a planted flower; opens its card. */
+function FlowerHit({ spot, planting, done, selected, onSelect, s }: {
+  spot: FlowerSpot; planting: Planting; done: number; selected: boolean; onSelect: (s: FlowerSpot) => void; s: CSSProperties
+}) {
+  const stage = flowerStage(done, planting.at)
+  const name = flowerMeta(planting.type).name
+  return (
+    <button
+      data-flower-hit
+      onClick={() => onSelect(spot)}
+      aria-label={`${name}${stage === 2 ? ', ready to harvest' : ''} — options`}
+      aria-expanded={selected}
+      className="absolute cursor-pointer rounded-full border-0 bg-transparent p-0 outline-offset-2 hover:bg-[radial-gradient(closest-side,rgba(255,255,255,.5),rgba(255,255,255,0))] focus-visible:outline-2 focus-visible:outline-pink"
+      style={{ ...s, zIndex: 1 }}
+    />
+  )
+}
 
 const lockPill = 'absolute left-1/2 -translate-x-1/2 flex items-center whitespace-nowrap rounded-full font-fredoka font-semibold'
 
@@ -12,10 +42,12 @@ interface PlotsProps {
   night: boolean
   pool: string
   onPlant: (t: PlotTarget) => void
+  selected: FlowerSpot | null
+  onSelect: (s: FlowerSpot) => void
 }
 
 /** Soil plots and pond plots in the scene, keyed by unlock level. */
-export function ScenePlots({ plots, level, done, night, pool, onPlant }: PlotsProps) {
+export function ScenePlots({ plots, level, done, night, pool, onPlant, selected, onSelect }: PlotsProps) {
   return (
     <>
       {SCENE_PLOTS.map(p => {
@@ -34,9 +66,11 @@ export function ScenePlots({ plots, level, done, night, pool, onPlant }: PlotsPr
                   </>
                 )}
                 <Shape s={{ bottom: 0, left: 8, width: 48, height: 14, borderRadius: '50%', background: base, boxShadow: 'inset 0 -3px 0 rgba(0,0,0,.08)' }} />
-                <Shape s={{ bottom: 6, left: 0, width: 64, height: 120, transformOrigin: '50% 100%', animation: 'popIn .7s ease-out' }}>
+                <Shape key={pl.at} s={{ bottom: 6, left: 0, width: 64, height: 120, transformOrigin: '50% 100%', animation: 'popIn .7s ease-out' }}>
                   <Flower type={pl.type} stage={flowerStage(done, pl.at)} />
+                  {flowerStage(done, pl.at) === 2 && <ReadyTwinkle />}
                 </Shape>
+                <FlowerHit spot={p.lv} planting={pl} done={done} selected={sameSpot(selected, p.lv)} onSelect={onSelect} s={{ left: 4, bottom: 4, width: 56, height: 112 }} />
               </>
             ) : unlocked ? (
               <>
@@ -72,11 +106,12 @@ export function ScenePlots({ plots, level, done, night, pool, onPlant }: PlotsPr
 }
 
 /** Wooden planter on the right: 1 slot at Lv6, +1 per level, max 5. */
-export function FlowerBed({ bed, bedCap, bedOpen, done, onPlant }: {
+export function FlowerBed({ bed, bedCap, bedOpen, done, onPlant, selected, onSelect }: {
   bed: Planting[]; bedCap: number; bedOpen: boolean; done: number; onPlant: (t: PlotTarget) => void
+  selected: FlowerSpot | null; onSelect: (s: FlowerSpot) => void
 }) {
   return (
-    <Shape s={{ right: '3%', bottom: 52, width: 226, height: 150, zIndex: 2 }}>
+    <Shape s={{ right: '3%', bottom: BED_BOTTOM, width: BED_W, height: 150, zIndex: 2 }}>
       {!bedOpen ? (
         <>
           <Shape s={{ left: 0, right: 0, bottom: 4, height: 34, borderRadius: '12px 12px 16px 16px', border: '2px dashed rgba(150,105,80,.5)', background: 'rgba(150,105,80,.14)', boxSizing: 'border-box' }} />
@@ -96,9 +131,13 @@ export function FlowerBed({ bed, bedCap, bedOpen, done, onPlant }: {
               return (
                 <div key={k} className="relative" style={{ width: 38, height: 120 }}>
                   {b && (
-                    <Shape s={{ bottom: -4, left: -13, width: 64, height: 120, transform: 'scale(.82)', transformOrigin: '50% 100%', animation: 'popIn .7s ease-out' }}>
-                      <Flower type={b.type} stage={flowerStage(done, b.at)} />
-                    </Shape>
+                    <>
+                      <Shape key={b.at} s={{ bottom: -4, left: -13, width: 64, height: 120, transform: 'scale(.82)', transformOrigin: '50% 100%', animation: 'popIn .7s ease-out' }}>
+                        <Flower type={b.type} stage={flowerStage(done, b.at)} />
+                        {flowerStage(done, b.at) === 2 && <ReadyTwinkle />}
+                      </Shape>
+                      <FlowerHit spot={{ bedSlot: k }} planting={b} done={done} selected={sameSpot(selected, { bedSlot: k })} onSelect={onSelect} s={{ left: -1, bottom: 0, width: 40, height: 100 }} />
+                    </>
                   )}
                   {empty && (
                     <button

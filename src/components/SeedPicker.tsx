@@ -1,18 +1,22 @@
 import { AnimatePresence, motion } from 'framer-motion'
 import { Droplets, Shovel, X } from 'lucide-react'
-import { FLOWERS, isAquatic, type FlowerType, type PlotTarget } from '../lib/garden'
+import { FLOWERS, flowerMeta, isAquatic, type FlowerType, type PlotTarget } from '../lib/garden'
 import { Flower } from './Flower'
 
 const isPond = (t: PlotTarget | null) => t === 5 || t === 7
 
 /** Seed packet modal. Pond plots take lotuses only; soil plots and the bed take the rest. */
-export function SeedPicker({ target, onPick, onClose }: {
-  target: PlotTarget | null; onPick: (t: FlowerType) => void; onClose: () => void
+export function SeedPicker({ target, swapping, onPick, onClose }: {
+  target: PlotTarget | null
+  /** The flower being replaced, when swapping a seed. */
+  swapping?: FlowerType
+  onPick: (t: FlowerType) => void; onClose: () => void
 }) {
   const pond = isPond(target)
-  const msg = pond
-    ? 'This is a pond plot — only lotuses can float here.'
-    : target === 'bed' ? 'Add a flower to your bed. Mix and match as you like!' : 'This soil plot is ready. What should bloom here?'
+  const msg = swapping
+    ? `Swap your ${flowerMeta(swapping).name.toLowerCase()} for a new seed — it starts again as a sprout.${pond ? ' Only lotuses float here.' : ''}`
+    : pond ? 'This is a pond plot — only lotuses can float here.'
+      : target === 'bed' ? 'Add a flower to your bed. Mix and match as you like!' : 'This soil plot is ready. What should bloom here?'
 
   return (
     <AnimatePresence>
@@ -34,7 +38,7 @@ export function SeedPicker({ target, onPick, onClose }: {
           >
             <div className="flex items-start justify-between gap-3">
               <div className="flex flex-col gap-0.5">
-                <h2 id="seed-title" className="m-0 font-fredoka text-[26px] font-semibold">Pick a seed packet</h2>
+                <h2 id="seed-title" className="m-0 font-fredoka text-[26px] font-semibold">{swapping ? 'Swap seed packet' : 'Pick a seed packet'}</h2>
                 <span className="text-sm font-semibold text-muted">{msg}</span>
               </div>
               <button

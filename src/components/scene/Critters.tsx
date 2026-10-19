@@ -1,5 +1,6 @@
 import { Heart, Sparkles } from 'lucide-react'
-import type { EffectType } from '../../lib/useGarden'
+import type { Fx } from '../../lib/useGarden'
+import { Flower } from '../Flower'
 import { Shape } from '../Shape'
 
 /** Streak > 3: a little bird perches on the fence. */
@@ -76,7 +77,23 @@ export function FertilizeGlow() {
 }
 
 /** Foreground effects layered above the tree. */
-export function ForegroundEffect({ effect }: { effect: EffectType }) {
+export function ForegroundEffect({ fx }: { fx: Fx }) {
+  const { effect } = fx
+  if (effect === 'harvest' && fx.flower && fx.at) {
+    const { left, bottom } = fx.at
+    return (
+      <>
+        <Shape s={{ left, bottom: bottom - 106, width: 64, height: 120, marginLeft: -32, zIndex: 7, pointerEvents: 'none', transformOrigin: '50% 60%', animation: 'harvestUp 1.5s ease-in forwards' }}>
+          <Flower type={fx.flower} stage={2} still />
+        </Shape>
+        {([[-34, -6, 0.1], [26, 10, 0], [-12, 26, 0.25], [36, -18, 0.35], [-40, 18, 0.45]] as const).map(([x, y, d], i) => (
+          <Shape key={i} s={{ left: `calc(${left} + ${x}px)`, bottom: bottom + y - 30, color: '#F2B33D', zIndex: 7, opacity: 0, pointerEvents: 'none', animation: `sparkle 1s ease-out ${d}s both` }}>
+            <Sparkles size={18} strokeWidth={2.2} />
+          </Shape>
+        ))}
+      </>
+    )
+  }
   if (effect === 'fertilize') return (
     <>
       {SPARKLES.map((sp, i) => (

@@ -1,7 +1,7 @@
 import { AnimatePresence, motion } from 'framer-motion'
 import {
   Check, ChevronDown, Cloud, CloudRain, Droplets, Heart, Loader2, LocateFixed, MapPin, Moon, Shovel, Snowflake,
-  Sparkles, Sprout, Sun, Sunrise, Sunset, type LucideIcon,
+  Scissors, Sparkles, Sprout, Sun, Sunrise, Sunset, type LucideIcon,
 } from 'lucide-react'
 import { useEffect, useRef, useState, type FormEvent } from 'react'
 import type { TimeOfDay, Weather } from '../../lib/garden'
@@ -164,7 +164,7 @@ export function SceneTopBar({ sky, onManual, onLive }: {
 
 const TOAST_META: Record<ToastType, [string, LucideIcon]> = {
   water: ['#7CBFEA', Droplets], fertilize: ['#F2B33D', Sparkles], weed: ['#8DBF5C', Shovel],
-  bonus: ['#F07A9A', Heart], plant: ['#6CC896', Sprout],
+  bonus: ['#F07A9A', Heart], plant: ['#6CC896', Sprout], harvest: ['#B79CF0', Scissors],
 }
 
 export function Toast({ toast }: { toast: ToastData }) {

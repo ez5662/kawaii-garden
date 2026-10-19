@@ -1,10 +1,11 @@
 import { useEffect, useState } from 'react'
+import { AlbumModal } from './components/Album'
 import { ClipboardFab, ClipboardPanel } from './components/Clipboard'
 import { GardenStatus } from './components/GardenStatus'
 import { Header } from './components/Header'
 import { Scene } from './components/scene/Scene'
 import { SeedPicker } from './components/SeedPicker'
-import { readTestingProps, type PlotTarget } from './lib/garden'
+import { FLOWERS, readTestingProps, type FlowerSpot, type PlotTarget } from './lib/garden'
 import { useAutoBackup } from './lib/useAutoBackup'
 import { useGarden } from './lib/useGarden'
 import { useSky } from './lib/useSky'
@@ -17,16 +18,25 @@ export default function App() {
   const autoBackup = useAutoBackup(g.garden)
   const [listOpen, setListOpen] = useState(false)
   const [picking, setPicking] = useState<PlotTarget | null>(null)
+  const [selected, setSelected] = useState<FlowerSpot | null>(null)
+  const [albumOpen, setAlbumOpen] = useState(false)
+  // A plot chip opens its flower's card in the scene, so bring the scene into view.
+  const selectFromChip = (s: FlowerSpot) => {
+    setSelected(s)
+    document.getElementById('garden-scene')?.scrollIntoView({ behavior: 'smooth', block: 'nearest' })
+  }
+  const swapping = picking != null && picking !== 'bed' ? g.plantingAt(picking)?.type : undefined
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.key !== 'Escape') return
       if (picking != null) setPicking(null)
+      else if (albumOpen) setAlbumOpen(false)
       else setListOpen(false)
     }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
-  }, [picking])
+  }, [picking, albumOpen])
 
   const toggleList = () => setListOpen(o => !o)
 
@@ -36,20 +46,25 @@ export default function App() {
       style={{ backgroundColor: '#FFF8F1', backgroundImage: 'radial-gradient(#F2E1D3 1.3px, transparent 1.3px)', backgroundSize: '22px 22px' }}
     >
       <div className="mx-auto flex max-w-[1240px] flex-col gap-[22px]">
-        <Header streak={g.streak} level={g.level} onToggleList={toggleList} />
+        <Header
+          streak={g.streak} level={g.level} onToggleList={toggleList}
+          albumFound={FLOWERS.filter(f => g.album.counts[f.type]).length} albumTotal={FLOWERS.length} onOpenAlbum={() => setAlbumOpen(true)}
+        />
         <section
           aria-label="Garden"
           className="flex min-w-0 flex-col gap-1.5 rounded-[32px] border-2 border-line bg-paper p-3 shadow-[0_8px_0_#F0E0D3,0_22px_44px_rgba(160,120,100,.12)]"
         >
-          <Scene g={g} sky={sky} onLive={g.setWeatherLive} onPlant={setPicking} />
-          <GardenStatus g={g} onPlant={setPicking} />
+          <Scene g={g} sky={sky} onLive={g.setWeatherLive} onPlant={setPicking} selected={selected} onSelect={setSelected} />
+          <GardenStatus g={g} onPlant={setPicking} onSelect={selectFromChip} />
         </section>
       </div>
 
       <ClipboardPanel open={listOpen} g={g} ab={autoBackup} now={sky.now} onClose={() => setListOpen(false)} />
       <ClipboardFab open={g.open} onClick={toggleList} />
+      <AlbumModal open={albumOpen} album={g.album} onClose={() => setAlbumOpen(false)} />
       <SeedPicker
         target={picking}
+        swapping={swapping}
         onClose={() => setPicking(null)}
         onPick={type => {
           if (picking == null) return

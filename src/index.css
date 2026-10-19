@@ -83,6 +83,12 @@ button:disabled { cursor: default; }
 @keyframes flow { from { background-position: 0 0 } to { background-position: 0 44px } }
 @keyframes ripple { from { transform: scale(.4); opacity: .9 } to { transform: scale(1.35); opacity: 0 } }
 
+@keyframes harvestUp {
+  0% { transform: translateY(0) scale(1); opacity: 1 }
+  25% { transform: translateY(-22px) scale(1.1) rotate(-6deg); opacity: 1 }
+  100% { transform: translateY(-170px) scale(.45) rotate(12deg); opacity: 0 }
+}
+
 /* Flower component */
 @keyframes fsway { 0%,100% { transform: rotate(-3deg) } 50% { transform: rotate(3deg) } }
 @keyframes fglow { 0%,100% { opacity: .55 } 50% { opacity: 1 } }

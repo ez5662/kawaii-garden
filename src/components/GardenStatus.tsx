@@ -1,5 +1,5 @@
 import { Check, Droplets, Flame, Flower, Flower2, Lock, Plus, Shovel, Sparkles, type LucideIcon } from 'lucide-react'
-import { BED_LEVEL, SCENE_PLOTS, flowerMeta, type PlotTarget } from '../lib/garden'
+import { BED_LEVEL, SCENE_PLOTS, flowerMeta, flowerStage, type FlowerSpot, type PlotTarget } from '../lib/garden'
 import type { ReactNode } from 'react'
 import type { Garden } from '../lib/useGarden'
 
@@ -20,18 +20,21 @@ interface Chip {
   icon: ReactNode
   title: string
   onClick?: () => void
+  /** Planted flower chips open the flower's card (and are ready-to-harvest aware). */
+  flower?: boolean
+  ready?: boolean
 }
 
 const lockedChip = (key: string, title: string): Chip =>
   ({ key, bg: '#FBF6F2', border: '#E6D7CB', dashed: true, color: '#9C8C92', icon: <Lock size={13} strokeWidth={2.6} />, title })
 
-function plotChips(g: Garden, onPlant: (t: PlotTarget) => void): Chip[] {
+function plotChips(g: Garden, onPlant: (t: PlotTarget) => void, onSelect: (s: FlowerSpot) => void): Chip[] {
   const chips: (Chip & { lv: number })[] = SCENE_PLOTS.map(p => {
     const pl = g.plots[p.lv]
     const key = 'plot-' + p.lv
     if (pl) {
       const f = flowerMeta(pl.type)
-      return { lv: p.lv, key, bg: f.bg, border: f.band, dashed: false, color: f.ink, icon: <Flower2 size={15} strokeWidth={2.6} />, title: f.name }
+      return { lv: p.lv, key, bg: f.bg, border: f.band, dashed: false, color: f.ink, icon: <Flower2 size={15} strokeWidth={2.6} />, title: f.name, onClick: () => onSelect(p.lv), flower: true, ready: flowerStage(g.done, pl.at) === 2 }
     }
     if (g.level >= p.lv) {
       return { lv: p.lv, key, bg: '#FFE0E8', border: '#F7A9BC', dashed: false, color: '#A0385A', icon: <Plus size={14} strokeWidth={3} />, title: 'Plant a seed', onClick: () => onPlant(p.lv) }
@@ -49,7 +52,7 @@ function plotChips(g: Garden, onPlant: (t: PlotTarget) => void): Chip[] {
 }
 
 /** Stage progress, today's chores, plot chips and companion hint below the scene. */
-export function GardenStatus({ g, onPlant }: { g: Garden; onPlant: (t: PlotTarget) => void }) {
+export function GardenStatus({ g, onPlant, onSelect }: { g: Garden; onPlant: (t: PlotTarget) => void; onSelect: (s: FlowerSpot) => void }) {
   const unlocked = SCENE_PLOTS.filter(p => g.level >= p.lv || g.plots[p.lv]).length + (g.bedOpen ? 1 : 0)
   const nextUnlock = [2, 3, 4, 5, 6, 7].find(lv => lv > g.level)
   const left = g.tasksToNextLevel
@@ -105,15 +108,18 @@ export function GardenStatus({ g, onPlant }: { g: Garden; onPlant: (t: PlotTarge
           <span className="text-[13px] font-semibold text-muted-2">{levelHint}</span>
         </div>
         <div className="flex flex-wrap gap-2">
-          {plotChips(g, onPlant).map(p => (
+          {plotChips(g, onPlant, onSelect).map(p => (
             <button
               key={p.key}
+              data-flower-hit={p.flower || undefined}
+              title={p.ready ? 'Ready to harvest' : undefined}
               onClick={p.onClick}
               disabled={!p.onClick}
               className={`flex h-8 items-center gap-1.5 rounded-full border-2 pr-3 pl-2 font-fredoka text-[13px] font-semibold ${p.onClick ? 'cursor-pointer' : ''}`}
               style={{ background: p.bg, borderColor: p.border, borderStyle: p.dashed ? 'dashed' : 'solid', color: p.color }}
             >
               <span className="flex">{p.icon}</span>{p.title}
+              {p.ready && <span className="flex text-[#F2B33D]" aria-label="ready to harvest"><Sparkles size={13} strokeWidth={2.6} /></span>}
             </button>
           ))}
         </div>

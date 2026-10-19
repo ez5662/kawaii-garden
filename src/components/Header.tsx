@@ -1,4 +1,4 @@
-import { ClipboardList, Flame, Leaf, Sprout, type LucideIcon } from 'lucide-react'
+import { BookHeart, ClipboardList, Flame, Leaf, Sprout, type LucideIcon } from 'lucide-react'
 
 const pill = 'flex h-11 items-center gap-2 rounded-full pr-[18px] pl-3 font-fredoka text-base font-semibold'
 
@@ -10,7 +10,9 @@ function PillIcon({ Icon, bg }: { Icon: LucideIcon; bg: string }) {
   )
 }
 
-export function Header({ streak, level, onToggleList }: { streak: number; level: number; onToggleList: () => void }) {
+export function Header({ streak, level, albumFound, albumTotal, onToggleList, onOpenAlbum }: {
+  streak: number; level: number; albumFound: number; albumTotal: number; onToggleList: () => void; onOpenAlbum: () => void
+}) {
   return (
     <header className="flex flex-wrap items-center justify-between gap-4">
       <div className="flex items-center gap-3.5">
@@ -31,6 +33,13 @@ export function Header({ streak, level, onToggleList }: { streak: number; level:
           <PillIcon Icon={Leaf} bg="#6CC896" />
           Level {level}
         </div>
+        <button
+          onClick={onOpenAlbum}
+          className={`${pill} cursor-pointer border-0 bg-[#ECE4FF] text-[#5E44A8] shadow-[0_4px_0_#CDBFF3] transition-transform hover:-translate-y-px active:translate-y-0.5 active:shadow-[0_2px_0_#CDBFF3]`}
+        >
+          <PillIcon Icon={BookHeart} bg="#B79CF0" />
+          Album {albumFound}/{albumTotal}
+        </button>
         <button
           onClick={onToggleList}
           className={`${pill} cursor-pointer border-0 bg-pink-tint text-pink-ink shadow-[0_4px_0_#F7B5C6] transition-transform hover:-translate-y-px active:translate-y-0.5 active:shadow-[0_2px_0_#F7B5C6]`}
