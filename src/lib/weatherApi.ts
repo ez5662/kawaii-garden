@@ -13,8 +13,8 @@ export interface Place {
 export interface WeatherReport {
   weather: Weather
   code: number
-  temp: number
-  unit: '°F' | '°C'
+  /** Always Celsius; converted for display. */
+  tempC: number
   /** Unix seconds. */
   sunrise: number
   sunset: number
@@ -43,7 +43,21 @@ export function weatherFromCode(code: number): Weather {
   return 'sunny'
 }
 
-const usesFahrenheit = () => /^en-US$/i.test(navigator.language || '')
+export type TempUnit = 'C' | 'F'
+const UNIT_KEY = 'kawaii-garden-temp-unit'
+
+/** Saved choice, else °F for US English browsers and °C everywhere else. */
+export function loadUnit(): TempUnit {
+  try {
+    const u = localStorage.getItem(UNIT_KEY)
+    if (u === 'C' || u === 'F') return u
+  } catch { /* fall through */ }
+  return /^en-US$/i.test(navigator.language || '') ? 'F' : 'C'
+}
+export function saveUnit(u: TempUnit) {
+  try { localStorage.setItem(UNIT_KEY, u) } catch { /* not remembered */ }
+}
+export const formatTemp = (c: number, u: TempUnit) => `${Math.round(u === 'F' ? c * 9 / 5 + 32 : c)}°${u}`
 
 async function getJson(url: string) {
   const res = await fetch(url)
@@ -52,7 +66,6 @@ async function getJson(url: string) {
 }
 
 export async function fetchWeather(p: Place): Promise<WeatherReport> {
-  const f = usesFahrenheit()
   const q = new URLSearchParams({
     latitude: p.lat.toFixed(3),
     longitude: p.lon.toFixed(3),
@@ -61,7 +74,7 @@ export async function fetchWeather(p: Place): Promise<WeatherReport> {
     timezone: 'auto',
     timeformat: 'unixtime',
     forecast_days: '1',
-    temperature_unit: f ? 'fahrenheit' : 'celsius',
+    temperature_unit: 'celsius',
   })
   const d = await getJson(`${FORECAST}?${q}`)
   const code = Number(d?.current?.weather_code)
@@ -70,8 +83,7 @@ export async function fetchWeather(p: Place): Promise<WeatherReport> {
   return {
     weather: weatherFromCode(code),
     code,
-    temp: Number(d.current.temperature_2m),
-    unit: f ? '°F' : '°C',
+    tempC: Number(d.current.temperature_2m),
     sunrise,
     sunset,
     fetchedAt: Date.now(),

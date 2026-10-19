@@ -85,7 +85,7 @@ export function SceneTopBar({ sky, onManual, onLive }: {
         >
           <span className="flex text-[#5C9BD6]"><WIcon size={16} strokeWidth={2.6} /></span>
           {wLabel}
-          {showingLive && <span className="text-muted">· {Math.round(sky.report!.temp)}{sky.report!.unit}</span>}
+          {showingLive && <span className="text-muted">· {sky.temp}</span>}
           {showingLive && <span aria-label="live" className="h-2 w-2 rounded-full bg-mint-strong shadow-[0_0_0_3px_#D5F3E4]" />}
           <span className="flex text-muted-2"><ChevronDown size={16} strokeWidth={2.4} /></span>
         </button>
@@ -99,7 +99,22 @@ export function SceneTopBar({ sky, onManual, onLive }: {
               transition={{ duration: 0.18, ease: 'easeOut' }}
               className="absolute top-[46px] right-0 box-content flex w-[236px] max-w-[calc(100vw-80px)] flex-col gap-0.5 rounded-[20px] border-2 border-line bg-paper p-1.5 shadow-[0_6px_0_#F0E0D3,0_16px_30px_rgba(120,90,80,.18)]"
             >
-              <div className={sectionLabel}>Live weather</div>
+              <div className="flex items-center justify-between pr-1.5">
+                <div className={sectionLabel}>Live weather</div>
+                <div role="radiogroup" aria-label="Temperature unit" className="flex rounded-full bg-[#F3EAE3] p-0.5">
+                  {(['C', 'F'] as const).map(u => (
+                    <button
+                      key={u}
+                      role="radio"
+                      aria-checked={sky.unit === u}
+                      onClick={() => sky.setUnit(u)}
+                      className={`h-6 w-8 cursor-pointer rounded-full border-0 font-fredoka text-xs font-semibold transition-colors ${sky.unit === u ? 'bg-paper text-ink shadow-[0_1px_0_rgba(0,0,0,.08)]' : 'bg-transparent text-muted-2 hover:text-ink'}`}
+                    >
+                      °{u}
+                    </button>
+                  ))}
+                </div>
+              </div>
               <button
                 role="menuitemradio"
                 aria-checked={sky.live}

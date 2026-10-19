@@ -3,7 +3,9 @@ import type { TestingProps, Weather } from './garden'
 import {
   DEFAULT_SUN, arcPosition, arcProgress, hourForPeriod, hourOf, periodAt, skyBlend, usableSun, type SunTimes,
 } from './sun'
-import { fetchWeather, geocodeCity, loadPlace, savePlace, type Place, type WeatherReport } from './weatherApi'
+import {
+  fetchWeather, formatTemp, geocodeCity, loadPlace, loadUnit, savePlace, saveUnit, type Place, type TempUnit, type WeatherReport,
+} from './weatherApi'
 
 const TICK_MS = 20_000
 const REFRESH_MS = 15 * 60_000
@@ -20,7 +22,9 @@ export function useSky(testing: TestingProps, live: boolean, manualWeather: Weat
   const [report, setReport] = useState<WeatherReport | null>(null)
   const [status, setStatus] = useState<LiveStatus>('idle')
   const [error, setError] = useState<string | null>(null)
+  const [unit, setUnitState] = useState<TempUnit>(loadUnit)
   const askedForLocation = useRef(false)
+  const setUnit = useCallback((u: TempUnit) => { saveUnit(u); setUnitState(u) }, [])
 
   useEffect(() => {
     const t = window.setInterval(() => setNow(new Date()), TICK_MS)
@@ -126,6 +130,7 @@ export function useSky(testing: TestingProps, live: boolean, manualWeather: Weat
     sun: sunP < 1 ? arcPosition(sunP, 36) : null,
     moon: moonP < 1 ? arcPosition(moonP, 40) : null,
     live, place, report, status, error,
+    unit, setUnit, temp: report ? formatTemp(report.tempC, unit) : null,
     locate, searchCity,
   }
 }
