@@ -128,12 +128,12 @@ function ViewSwitch({ view, onChange, openCount }: { view: ListView; onChange: (
             role="radio"
             aria-checked={on}
             onClick={() => onChange(k)}
-            className={`relative flex h-8 min-w-0 flex-1 cursor-pointer items-center justify-center gap-1.5 rounded-full border-0 bg-transparent px-2 font-fredoka text-[13px] font-semibold whitespace-nowrap transition-colors ${on ? 'text-pink-ink' : 'text-muted hover:text-ink'}`}
+            className={`relative flex h-8 min-w-0 flex-1 cursor-pointer items-center justify-center gap-1.5 rounded-full border-0 bg-transparent px-2 pb-[2px] font-fredoka text-[13px] font-semibold whitespace-nowrap transition-colors ${on ? 'text-pink-ink' : 'text-muted hover:text-ink'}`}
           >
             {on && (
               <motion.span
                 layoutId="list-view-pill"
-                className="absolute inset-0 rounded-full bg-pink-tint shadow-[0_2px_0_#F7B5C6]"
+                className="absolute inset-x-0 top-0 bottom-[2px] rounded-full bg-pink-tint shadow-[0_2px_0_#F7B5C6]"
                 transition={{ type: 'spring', stiffness: 500, damping: 36 }}
               />
             )}
