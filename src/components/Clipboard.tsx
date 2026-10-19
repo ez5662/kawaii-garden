@@ -10,7 +10,7 @@ import type { AutoBackup } from '../lib/useAutoBackup'
 import type { Garden } from '../lib/useGarden'
 
 const ROW_STYLE = {
-  done: { bg: '#ECF9F2', border: '#BDE8D1', dashed: false, color: '#4E8468', sub: '#4E8468', dotBg: '#6CC896', dotBorder: '#6CC896', label: 'Completed · helped the garden' },
+  done: { bg: '#ECF9F2', border: '#BDE8D1', dashed: false, color: '#4E8468', sub: '#4E8468', dotBg: '#6CC896', dotBorder: '#6CC896', label: 'Completed!' },
   dropped: { bg: '#F7F3F0', border: '#E3D8D0', dashed: true, color: '#9A8C86', sub: '#9A8C86', dotBg: '#CFC2BA', dotBorder: '#CFC2BA', label: 'Dropped · not counted' },
   todo: { bg: '#FFFDF9', border: '#F1E4DA', dashed: false, color: '#4A3F45', sub: '#A8969C', dotBg: '#FFFFFF', dotBorder: '#E6D2C4', label: 'Waiting to grow' },
 }
