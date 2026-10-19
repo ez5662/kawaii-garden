@@ -48,13 +48,17 @@ const HEADS: Record<FlowerType, () => ReactNode> = {
   sunflower: () => (
     <>
       {range(12).map(i => (
-        <Shape key={i} s={{ left: -5, bottom: -10, width: 10, height: 20, borderRadius: '50%', background: i % 2 ? '#F7B92E' : '#FFCB3D', transform: `rotate(${i * 30}deg) translateY(-15px)` }} />
+        <Shape key={i} s={{ left: -6, bottom: -9, width: 12, height: 18, borderRadius: '50% 50% 45% 45% / 65% 65% 35% 35%', background: '#F7B92E', transform: `rotate(${i * 30 + 15}deg) translateY(-14px)` }} />
       ))}
-      <Shape s={{ left: -11, bottom: -11, width: 22, height: 22, borderRadius: '50%', backgroundColor: '#8A5A3B', backgroundImage: 'radial-gradient(#6B4229 1.1px, transparent 1.4px)', backgroundSize: '5px 5px' }} />
-      <Shape s={{ left: -5, bottom: 1, width: 3, height: 4, borderRadius: '50%', background: '#FFF6E0' }} />
-      <Shape s={{ left: 2, bottom: 1, width: 3, height: 4, borderRadius: '50%', background: '#FFF6E0' }} />
-      <Shape s={{ left: -9, bottom: -4, width: 5, height: 3, borderRadius: '50%', background: '#FF9DB2' }} />
-      <Shape s={{ left: 4, bottom: -4, width: 5, height: 3, borderRadius: '50%', background: '#FF9DB2' }} />
+      {range(12).map(i => (
+        <Shape key={i} s={{ left: -5.5, bottom: -8, width: 11, height: 16, borderRadius: '50% 50% 45% 45% / 65% 65% 35% 35%', background: '#FFD45C', transform: `rotate(${i * 30}deg) translateY(-12px)` }} />
+      ))}
+      <Shape s={{ left: -11, bottom: -11, width: 22, height: 22, borderRadius: '50%', background: 'radial-gradient(circle at 50% 38%, #B5824F 0%, #9A6A40 70%)', boxShadow: 'inset 0 -2px 0 rgba(0,0,0,.08)' }} />
+      <Shape s={{ left: -4.5, bottom: 1, width: 3, height: 4, borderRadius: '50%', background: '#3E2A20' }} />
+      <Shape s={{ left: 1.5, bottom: 1, width: 3, height: 4, borderRadius: '50%', background: '#3E2A20' }} />
+      <Shape s={{ left: -2, bottom: -3, width: 4, height: 2, border: '1.5px solid #3E2A20', borderTop: 0, borderRadius: '0 0 4px 4px' }} />
+      <Shape s={{ left: -9, bottom: -2, width: 5, height: 3, borderRadius: '50%', background: '#FF9DB2' }} />
+      <Shape s={{ left: 4, bottom: -2, width: 5, height: 3, borderRadius: '50%', background: '#FF9DB2' }} />
     </>
   ),
   rose: () => (
