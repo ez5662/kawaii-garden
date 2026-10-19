@@ -1,5 +1,8 @@
 import { AnimatePresence, motion } from 'framer-motion'
-import { Ban, Check, CloudUpload, Download, Plus, RotateCcw, Sprout, Trash2, Upload, X } from 'lucide-react'
+import {
+  ArrowDownUp, Ban, Check, CloudUpload, Download, List, ListTodo, PartyPopper, Plus, RotateCcw, Sprout, Trash2, Upload, X,
+  type LucideIcon,
+} from 'lucide-react'
 import { useEffect, useRef, useState, type ChangeEvent } from 'react'
 import { downloadBackup, parseBackup } from '../lib/backup'
 import type { Task } from '../lib/garden'
@@ -90,6 +93,60 @@ function StatTile({ bg, ink, strong, title, value, sub, pct, bar }: {
   )
 }
 
+type ListView = 'all' | 'todoFirst' | 'todoOnly'
+const VIEWS: [ListView, string, LucideIcon][] = [
+  ['all', 'All', List],
+  ['todoFirst', 'To-do first', ArrowDownUp],
+  ['todoOnly', 'To-do only', ListTodo],
+]
+const VIEW_KEY = 'kawaii-garden-list-view'
+
+function loadView(): ListView {
+  try {
+    const v = localStorage.getItem(VIEW_KEY)
+    return VIEWS.some(([k]) => k === v) ? (v as ListView) : 'all'
+  } catch {
+    return 'all'
+  }
+}
+
+/** All: newest first · To-do first: open tasks, then done/dropped · To-do only: open tasks. */
+function visibleTasks(tasks: Task[], view: ListView) {
+  if (view === 'all') return tasks
+  const todo = tasks.filter(t => t.status === 'todo')
+  return view === 'todoOnly' ? todo : [...todo, ...tasks.filter(t => t.status !== 'todo')]
+}
+
+function ViewSwitch({ view, onChange, openCount }: { view: ListView; onChange: (v: ListView) => void; openCount: number }) {
+  return (
+    <div role="radiogroup" aria-label="Show tasks" className="flex gap-1 rounded-full border-2 border-line bg-[#FFF9F3] p-1">
+      {VIEWS.map(([k, label, Icon]) => {
+        const on = k === view
+        return (
+          <button
+            key={k}
+            role="radio"
+            aria-checked={on}
+            onClick={() => onChange(k)}
+            className={`relative flex h-8 min-w-0 flex-1 cursor-pointer items-center justify-center gap-1.5 rounded-full border-0 bg-transparent px-2 font-fredoka text-[13px] font-semibold whitespace-nowrap transition-colors ${on ? 'text-pink-ink' : 'text-muted hover:text-ink'}`}
+          >
+            {on && (
+              <motion.span
+                layoutId="list-view-pill"
+                className="absolute inset-0 rounded-full bg-pink-tint shadow-[0_2px_0_#F7B5C6]"
+                transition={{ type: 'spring', stiffness: 500, damping: 36 }}
+              />
+            )}
+            <span className="relative flex"><Icon size={14} strokeWidth={2.6} /></span>
+            <span className="relative">{label}</span>
+            {k === 'todoOnly' && openCount > 0 && <span className="relative text-[11px] opacity-70">{openCount}</span>}
+          </button>
+        )
+      })}
+    </div>
+  )
+}
+
 /** Clip with a little face at the top of the board. */
 function MetalClip() {
   return (
@@ -163,6 +220,12 @@ export function ClipboardPanel({ open, g, ab, now, onClose }: {
   open: boolean; g: Garden; ab: AutoBackup; now: Date; onClose: () => void
 }) {
   const [draft, setDraft] = useState('')
+  const [view, setView] = useState<ListView>(loadView)
+  const changeView = (v: ListView) => {
+    setView(v)
+    try { localStorage.setItem(VIEW_KEY, v) } catch { /* not remembered */ }
+  }
+  const shown = visibleTasks(g.tasks, view)
   const [notice, setNotice] = useState<{ ok: boolean; text: string } | null>(null)
   const fileInput = useRef<HTMLInputElement>(null)
   const [deleted, setDeleted] = useState<Parameters<Garden['unremove']>[0] | null>(null)
@@ -278,7 +341,16 @@ export function ClipboardPanel({ open, g, ab, now, onClose }: {
                   <StatTile bg="#D5F3E4" ink="#2F7A55" strong="#1F5C3E" title="Effective" value={pct(g.eff) + '%'} sub={`${g.done} / ${g.effective} relevant`} pct={pct(g.eff)} bar="#4FB884" />
                 </div>
 
+                {g.total > 0 && <ViewSwitch view={view} onChange={changeView} openCount={g.open} />}
+
                 <div className="flex flex-col gap-2.5">
+                  {g.total > 0 && shown.length === 0 && (
+                    <div className="flex flex-col items-center gap-2 rounded-3xl border-2 border-dashed border-[#BDE8D1] px-5 py-[30px] text-center text-muted-2">
+                      <span className="flex text-mint-strong"><PartyPopper size={28} strokeWidth={2.4} /></span>
+                      <span className="font-fredoka text-[17px] font-semibold text-[#6B5A60]">All caught up!</span>
+                      <span className="text-sm font-semibold">Nothing left to do. Add a task or switch to All to see finished ones.</span>
+                    </div>
+                  )}
                   {g.total === 0 && (
                     <div className="flex flex-col items-center gap-2 rounded-3xl border-2 border-dashed border-[#EAD9CC] px-5 py-[34px] text-center text-muted-2">
                       <span className="flex text-mint"><Sprout size={28} strokeWidth={2.4} /></span>
@@ -287,7 +359,7 @@ export function ClipboardPanel({ open, g, ab, now, onClose }: {
                     </div>
                   )}
                   <AnimatePresence initial={false}>
-                    {g.tasks.map(t => <TaskRow key={t.id} t={t} g={g} onDelete={() => deleteTask(t.id)} />)}
+                    {shown.map(t => <TaskRow key={t.id} t={t} g={g} onDelete={() => deleteTask(t.id)} />)}
                   </AnimatePresence>
                 </div>
 
